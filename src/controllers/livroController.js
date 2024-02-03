@@ -1,4 +1,6 @@
 import livro from "../models/Livro.js";
+import {autor} from "../models/Autor.js";
+
 
 class LivroController {
     
@@ -22,10 +24,13 @@ class LivroController {
     }
 
     static async cadastrarLivro(req,res) {
-
+        const novoLivro = req.body;
+        
         try {
-            const novoLivro = await livro.create(req.body);
-            res.status(201).json({message: "Criado com sucesso!", livro: novoLivro});
+            const autorEncontrado = await autor.findById(novoLivro.autor);
+            const livroCompleto = {...novoLivro, autor: {... autorEncontrado._doc}};
+            const livroCriado = await livro.create(livroCompleto);
+            res.status(201).json({message: "Criado com sucesso!", livro: livroCompleto});
 
         } catch(erro) {
             res.status(500).json({message: `${erro.message} - falha ao cadastrar livro...`})
@@ -48,7 +53,19 @@ class LivroController {
             await livro.findByIdAndDelete(id);
             res.status(200).json({message: "Livro excluído!"});
         } catch(erro) {
-            res.status(500).json({message: `${erro.message} - falha ao remover livro...`})
+            res.status(500).json({message: `${erro.message} - falha ao remover livro...`});
+        }
+    }
+
+    static async listrarLivrosPorEditora (req, res) {
+        const editora = req.query.editora;
+
+        try {
+            const livrosPorEdiora = await livro.find({editora: editora});
+            res.status(200).json(livrosPorEdiora);
+        } catch(erro) {
+            res.status(500).json({message: `${erro.message} - falha ao consultar livro por editora...`});
+
         }
     }
 };
